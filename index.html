@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🦕 Jogo do Dinossauro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0f0f0f;
+            --surface: #2a2a2a;
+            --surface-light: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: var(--surface);
+            padding: 16px;
+            border-bottom: 1px solid var(--surface-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .score-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        /* Container principal */
+        .container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Menu lateral */
+        .sidebar {
+            width: 100px;
+            background: var(--surface);
+            border-right: 1px solid var(--surface-light);
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            padding: 12px;
+            border: 2px solid transparent;
+            background: var(--surface-light);
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        .nav-btn.active {
+            border-color: var(--accent);
+            background: transparent;
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        /* Conteúdo */
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            overflow: auto;
+        }
+
+        /* Seções */
+        .section {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .section.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Game Section */
+        #gameSection {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: linear-gradient(to bottom, #1a2a3a 0%, #0f1520 100%);
+            border-radius: 12px;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        /* Shop Section */
+        #shopSection {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .shop-empty {
+            font-size: 48px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .shop-text {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        /* Leaderboard Section */
+        #leaderboardSection {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .leaderboard-container {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+        }
+
+        .leaderboard-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--surface-light);
+            font-size: 16px;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-rank {
+            font-weight: bold;
+            color: var(--accent);
+            min-width: 30px;
+        }
+
+        .leaderboard-name {
+            flex: 1;
+            margin-left: 16px;
+            color: var(--text-primary);
+        }
+
+        .leaderboard-score {
+            font-weight: bold;
+            color: var(--success);
+        }
+
+        .leaderboard-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 20px;
+        }
+
+        /* Game Over Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .modal-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--danger);
+        }
+
+        .modal-score {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .modal-label {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .modal-button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .modal-button:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+                padding: 8px;
+                gap: 4px;
+            }
+
+            .nav-btn {
+                padding: 8px;
+                font-size: 10px;
+            }
+
+            .nav-icon {
+                font-size: 20px;
+            }
+
+            .header {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .score-display {
+                font-size: 14px;
+            }
+
+            .modal {
+                min-width: 280px;
+                padding: 30px 20px;
+            }
+
+            .modal-title {
+                font-size: 28px;
+            }
+
+            .modal-score {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .nav-btn {
+                padding: 6px;
+                font-size: 9px;
+            }
+
+            .nav-icon {
+                font-size: 18px;
+            }
+
+            .header h1 {
+                font-size: 14px;
+            }
+
+            .score-display {
+                font-size: 12px;
+            }
+
+            .content {
+                padding: 8px;
+            }
+
+            .modal {
+                min-width: 90%;
+                padding: 20px;
+            }
+
+            .modal-title {
+                font-size: 24px;
+            }
+
+            .modal-score {
+                font-size: 18px;
+            }
+        }
+
+        /* Animações */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="nav-icon">🦕</span> Dino Jump</h1>
+        <div class="score-display" id="headerScore">0</div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <button class="nav-btn active" data-section="game">
+                <span class="nav-icon">🎮</span>
+                <span>Play</span>
+            </button>
+            <button class="nav-btn" data-section="shop">
+                <span class="nav-icon">🛍️</span>
+                <span>Shop</span>
+            </button>
+            <button class="nav-btn" data-section="leaderboard">
+                <span class="nav-icon">🏆</span>
+                <span>Top</span>
+            </button>
+        </div>
+
+        <div class="content">
+            <div id="gameSection" class="section active">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+
+            <div id="shopSection" class="section">
+                <div class="shop-empty">🛍️</div>
+                <div class="shop-text">Shop em breve!</div>
+                <div style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
+                    Novos skins e powerups chegando em breve...
+                </div>
+            </div>
+
+            <div id="leaderboardSection" class="section">
+                <div class="leaderboard-container">
+                    <div class="leaderboard-title">🏆 Leaderboard</div>
+                    <div id="leaderboardList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="gameOverModal">
+        <div class="modal">
+            <div class="modal-title">GAME OVER</div>
+            <div class="modal-label">Sua pontuação:</div>
+            <div class="modal-score" id="modalScore">0</div>
+            <input type="text" class="modal-input" id="playerName" placeholder="Seu nome" maxlength="20">
+            <button class="modal-button" id="saveScoreBtn">Salvar Pontuação</button>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameRunning = false;
+        let gameOver = false;
+        let score = 0;
+        let speed = 5;
+        let isMobile = window.innerWidth <= 768;
+
+        // Ajustar canvas responsivamente
+        function resizeCanvas() {
+            const container = document.getElementById('gameSection');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            isMobile = window.innerWidth <= 768;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const groundY = canvas.height * 0.65;
+
+        const dino = {
+            x: canvas.width * 0.1,
+            y: groundY,
+            width: canvas.width * 0.06,
+            height: canvas.height * 0.12,
+            velocityY: 0,
+            jumpPower: -canvas.height * 0.25,
+            gravity: canvas.height * 0.0015,
+            grounded: true,
+            color: '#10b981'
+        };
+
+        const obstacles = [];
+        let obstacleTimer = 0;
+        const obstacleGap = isMobile ? 90 : 120;
+
+        function startGame() {
+            gameRunning = true;
+            gameOver = false;
+            score = 0;
+            speed = 5;
+            obstacles.length = 0;
+            dino.y = groundY;
+            dino.velocityY = 0;
+            dino.grounded = true;
+            document.getElementById('gameOverModal').classList.remove('active');
+            updateHeaderScore();
+        }
+
+        function createObstacle() {
+            const height = canvas.height * 0.15;
+            obstacles.push({
+                x: canvas.width,
+                y: groundY,
+                width: canvas.width * 0.05,
+                height: height,
+                color: '#ef4444'
+            });
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+
+            // Física do pulo
+            dino.velocityY += dino.gravity;
+            dino.y += dino.velocityY;
+
+            if (dino.y >= groundY) {
+                dino.y = groundY;
+                dino.velocityY = 0;
+                dino.grounded = true;
+            }
+
+            obstacleTimer++;
+            if (obstacleTimer > obstacleGap) {
+                createObstacle();
+                obstacleTimer = 0;
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].x -= speed;
+
+                if (obstacles[i].x + obstacles[i].width < 0) {
+                    obstacles.splice(i, 1);
+                    score += 10;
+                    updateHeaderScore();
+                    if (score % 100 === 0 && speed < 10) {
+                        speed += 0.5;
+                    }
+                    continue;
+                }
+
+                if (checkCollision(dino, obstacles[i])) {
+                    gameRunning = false;
+                    gameOver = true;
+                    showGameOverModal();
+                }
+            }
+        }
+
+        function checkCollision(rect1, rect2) {
+            const padding = 5;
+            return (
+                rect1.x + padding < rect2.x + rect2.width &&
+                rect1.x + rect1.width - padding > rect2.x &&
+                rect1.y + padding < rect2.y + rect2.height &&
+                rect1.y + rect1.height - padding > rect2.y
+            );
+        }
+
+        function drawGame() {
+            // Fundo gradiente
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1a2a3a');
+            gradient.addColorStop(1, '#0f1520');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Chão
+            ctx.fillStyle = '#3a3a3a';
+            ctx.fillRect(0, groundY + dino.height + 5, canvas.width, canvas.height - groundY - dino.height - 5);
+
+            // Linha do chão
+            ctx.strokeStyle = '#555555';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY + dino.height + 5);
+            ctx.lineTo(canvas.width, groundY + dino.height + 5);
+            ctx.stroke();
+
+            // Dinossauro
+            ctx.fillStyle = dino.color;
+            ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+
+            // Olho do dinossauro
+            ctx.fillStyle = '#000';
+            const eyeSize = dino.width * 0.15;
+            ctx.fillRect(
+                dino.x + dino.width * 0.6,
+                dino.y + dino.height * 0.25,
+                eyeSize,
+                eyeSize
+            );
+
+            // Obstáculos
+            ctx.fillStyle = '#ef4444';
+            obstacles.forEach(obs => {
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+            });
+
+            // Velocidade e score
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${canvas.width * 0.04}px Arial`;
+            ctx.fillText(`Velocidade: ${Math.round(speed * 10) / 10}`, canvas.width * 0.02, canvas.height * 0.08);
+        }
+
+        function gameLoop() {
+            updateGame();
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function jump() {
+            if (dino.grounded && gameRunning) {
+                dino.velocityY = dino.jumpPower;
+                dino.grounded = false;
+            }
+        }
+
+        // Controles de teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                if (!gameRunning && !gameOver) {
+                    startGame();
+                } else if (gameRunning) {
+                    jump();
+                } else if (gameOver) {
+                    gameOver = false;
+                }
+            }
+        });
+
+        // Controles touch e click
+        canvas.addEventListener('click', () => {
+            if (!gameRunning && !gameOver) {
+                startGame();
+            } else if (gameRunning) {
+                jump();
+            }
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!gameRunning && !gameOver) {
+                startGame();
+            } else if (gameRunning) {
+                jump();
+            }
+        });
+
+        // Leaderboard
+        function loadLeaderboard() {
+            const data = localStorage.getItem('leaderboard');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveToLeaderboard(name, score) {
+            let leaderboard = loadLeaderboard();
+            leaderboard.push({ name, score, date: new Date().toLocaleDateString('pt-BR') });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 10);
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            updateLeaderboardDisplay();
+        }
+
+        function updateLeaderboardDisplay() {
+            const leaderboard = loadLeaderboard();
+            const list = document.getElementById('leaderboardList');
+            
+            if (leaderboard.length === 0) {
+                list.innerHTML = '<div class="leaderboard-empty">Nenhuma pontuação registrada ainda</div>';
+                return;
+            }
+
+            list.innerHTML = leaderboard.map((entry, index) => `
+                <div class="leaderboard-item">
+                    <span class="leaderboard-rank">#${index + 1}</span>
+                    <span class="leaderboard-name">${entry.name}</span>
+                    <span class="leaderboard-score">${entry.score}</span>
+                </div>
+            `).join('');
+        }
+
+        function showGameOverModal() {
+            document.getElementById('modalScore').textContent = score;
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerName').focus();
+            document.getElementById('gameOverModal').classList.add('active');
+        }
+
+        function updateHeaderScore() {
+            document.getElementById('headerScore').textContent = score;
+        }
+
+        // Event listeners do modal
+        document.getElementById('saveScoreBtn').addEventListener('click', () => {
+            const name = document.getElementById('playerName').value.trim() || 'Anônimo';
+            saveToLeaderboard(name, score);
+            document.getElementById('gameOverModal').classList.remove('active');
+            updateLeaderboardDisplay();
+        });
+
+        // Navegação
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (gameRunning) {
+                    gameRunning = false;
+                }
+
+                const section = btn.dataset.section;
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+                btn.classList.add('active');
+                document.getElementById(section + 'Section').classList.add('active');
+
+                if (section === 'game') {
+                    resizeCanvas();
+                } else if (section === 'leaderboard') {
+                    updateLeaderboardDisplay();
+                }
+            });
+        });
+
+        // Iniciar
+        updateLeaderboardDisplay();
+        gameLoop();
+    </script>
+</body>
+</html>
